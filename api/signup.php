@@ -105,17 +105,23 @@ try {
         exit;
     }
 
+    // $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    // Hash the user's password from input
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+
     $token = bin2hex(random_bytes(32));
     $expires = date('Y-m-d H:i:s', strtotime('+1 day'));
 
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, role, is_verified, verification_token, verification_token_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, role, email_verified, verification_token, verification_token_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
     $stmt->execute([$name, $email, $phone, $hashedPassword, $role, $token, $expires]);
+
 
     $newUserId = $pdo->lastInsertId();
 
     // ✅ Send verification email
-    $verifyLink = "https://aquamarine-cobra-751684.hostingersite.com/verify-email?token=$token";
+    // $verifyLink = "https://aquamarine-cobra-751684.hostingersite.com/verify-email?token=$token";
+    $verifyLink = "http://localhost/squarestatusApp/api/verify-email.php?token=$token";
 
 
 

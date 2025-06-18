@@ -23,7 +23,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  const { setUser } = useAuth();
+  const { login } = useAuth();
+
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -47,31 +48,51 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        'https://aquamarine-cobra-751684.hostingersite.com/api/login.php',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const user = await login(email, password); // 🔥 Use the context login()
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setServerError(data?.error || 'Login failed');
-        return;
+      if (user) {
+        navigate('/dashboard'); // ✅ Now the user is authenticated in context
       }
-
-      localStorage.setItem('token', data.token); // ✅ Store JWT token
-      setUser(data.user); // ✅ Set user context
-      navigate('/dashboard'); // ✅ Redirect
     } catch (err) {
-      setServerError('Network error, please try again.');
+      console.error('Login error:', err);
+      setServerError(err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setServerError('');
+  //   if (!validateForm()) return;
+
+  //   setIsLoading(true);
+  //   try {
+  //     const response = await fetch(
+  //       'http://localhost/squarestatusApp/api/login.php',
+  //       {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ email, password }),
+  //       }
+  //     );
+
+  //     const data = await response.json();
+
+  //     if (!response.ok || !data.user) {
+  //       setServerError(data?.error || 'Login failed');
+  //       return;
+  //     }
+  //     const { password: _, ...userWithoutPassword } = data.user;
+  //     localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     console.error('Fetch error:', err);
+  //     setServerError('Network error, please try again.');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const toggleShowPassword = () => setShowPassword(!showPassword);
 

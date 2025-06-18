@@ -3,6 +3,25 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        "error" => "PHP error",
+        "details" => "$errstr in $errfile on line $errline"
+    ]);
+    exit;
+});
+
+set_exception_handler(function ($e) {
+    http_response_code(500);
+    echo json_encode([
+        "error" => "Unhandled exception",
+        "details" => $e->getMessage()
+    ]);
+    exit;
+});
+
+
 require_once 'jwt-utils.php';
 // api/login.php
 
@@ -72,19 +91,23 @@ try {
         exit;
     }
 
+    file_put_contents('php://stderr', "✅ User found and email is verified.\n");
+
+
     if (!$user['email_verified']) {
         http_response_code(403);
         echo json_encode(["error" => "Email is not verified. Please check your inbox."]);
         exit;
     }
 
-    // Verify password
-    if (!password_verify($password, $user['password_hash'])) {
-        http_response_code(401);
-        echo json_encode(["error" => "Invalid email or password"]);
-        exit;
-    }
+    file_put_contents('php://stderr', "Comparing input password: '$password' with hash: '{$user['password_hash']}'\n");
 
+    if (!password_verify($password, $user['password_hash'])) {
+    file_put_contents('php://stderr', "❌ Password does NOT match!\n");
+    http_response_code(401);
+    echo json_encode(["error" => "Invalid email or password"]);
+    exit;
+    }
 
     // Authentication successful - generate a session token (optional)
     // For example, JWT or random token — here just returning user info for simplicity
@@ -101,7 +124,8 @@ try {
             "id" => $user['id'],
             "name" => $user['name'],
             "email" => $user['email'],
-            "role" => $user['role']
+            "role" => $user['role'],
+            "emailVerified" => (bool)$user['email_verified']
         ]
     ]);
     exit;

@@ -85,21 +85,25 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/signup.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          role: appSettings.enableRoleSelectionOnSignup
-            ? formData.role
-            : 'user',
-        }),
-      });
+      // const response = await fetch('/api/signup.php', {
+      const response = await fetch(
+        'http://localhost/squarestatusApp/api/signup.php',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: appSettings.enableRoleSelectionOnSignup
+              ? formData.role
+              : 'user',
+          }),
+        }
+      );
 
       // const data = await response.json();
       const text = await response.text();

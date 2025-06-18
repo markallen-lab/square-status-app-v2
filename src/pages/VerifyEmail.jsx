@@ -36,10 +36,11 @@ const VerifyEmail = () => {
 
     const verifyEmailToken = async () => {
       try {
-        // Call your backend verification endpoint with the token
-        // Adjust URL accordingly to your PHP verify-email.php location
         const response = await fetch(
-          `/api/verify-email.php?token=${encodeURIComponent(token)}`,
+          // `/api/verify-email.php?token=${encodeURIComponent(token)}`,
+          `http://localhost/squarestatusApp/api/verify-email.php?token=${encodeURIComponent(
+            token
+          )}`,
           {
             method: 'GET',
             headers: {
