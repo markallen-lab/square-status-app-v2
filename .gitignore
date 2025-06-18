@@ -3,3 +3,9 @@ dist
 test-password.php
 test-jwt.php
 .env
+*.pem
+*.key
+*.crt
+credentials.json
+api/vendor/
+/vendor/
