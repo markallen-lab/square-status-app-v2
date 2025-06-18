@@ -1,9 +1,13 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php'; // adjust if needed
+require_once __DIR__ . '/../vendor/autoload.php'; 
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-$JWT_SECRET = "eec3442f289eb40080ed6e5034b03a99aa9e5d7f74430b43f125365c3ba70f59";
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$JWT_SECRET = $_ENV['JWT_SECRET'];
 
 function createJWT($payload) {
     global $JWT_SECRET;

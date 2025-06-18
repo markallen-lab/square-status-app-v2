@@ -60,7 +60,6 @@ const Signup = () => {
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
     } else if (!/^\d{10,15}$/.test(formData.phone.replace(/\D/g, ''))) {
-      // Allow more digits for international numbers
       newErrors.phone = 'Phone number is invalid';
     }
     if (!formData.password) {
@@ -85,7 +84,6 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      // const response = await fetch('/api/signup.php', {
       const response = await fetch(
         'http://localhost/squarestatusApp/api/signup.php',
         {
@@ -104,19 +102,16 @@ const Signup = () => {
           }),
         }
       );
-
-      // const data = await response.json();
       const text = await response.text();
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        console.error('Failed to parse server response:', text, e); // Log original text and error
+        console.error('Failed to parse server response:', text, e);
         throw new Error(`Unexpected server response: ${text}`);
       }
 
       if (!response.ok) {
-        // Backend sends error message in data.message
         throw new Error(data.message || 'Failed to create account');
       }
 

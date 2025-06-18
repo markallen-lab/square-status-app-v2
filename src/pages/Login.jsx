@@ -48,10 +48,10 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const user = await login(email, password); // 🔥 Use the context login()
+      const user = await login(email, password);
 
       if (user) {
-        navigate('/dashboard'); // ✅ Now the user is authenticated in context
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -60,39 +60,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setServerError('');
-  //   if (!validateForm()) return;
-
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await fetch(
-  //       'http://localhost/squarestatusApp/api/login.php',
-  //       {
-  //         method: 'POST',
-  //         headers: { 'Content-Type': 'application/json' },
-  //         body: JSON.stringify({ email, password }),
-  //       }
-  //     );
-
-  //     const data = await response.json();
-
-  //     if (!response.ok || !data.user) {
-  //       setServerError(data?.error || 'Login failed');
-  //       return;
-  //     }
-  //     const { password: _, ...userWithoutPassword } = data.user;
-  //     localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-  //     navigate('/dashboard');
-  //   } catch (err) {
-  //     console.error('Fetch error:', err);
-  //     setServerError('Network error, please try again.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const toggleShowPassword = () => setShowPassword(!showPassword);
 

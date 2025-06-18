@@ -10,7 +10,6 @@ if (!isset($headers['Authorization']) || !preg_match('/Bearer\s(\S+)/', $headers
 
 try {
     $decoded = verifyJWT($matches[1]);
-    // You can use $decoded->id or $decoded->email to fetch user-specific data
     echo json_encode(["message" => "Authorized", "userId" => $decoded->id]);
 } catch (Exception $e) {
     http_response_code(401);

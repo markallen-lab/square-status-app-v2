@@ -1,5 +1,5 @@
 <?php
-ob_start(); // Buffer output to catch accidental whitespace/errors
+ob_start();
 
 if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
     error_log("Autoload file not found!");
@@ -9,15 +9,16 @@ if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
 } else {
     error_log("Autoload file found and included.");
 }
-require __DIR__ . '/vendor/autoload.php';
-
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 // api/signup.php
 
-require __DIR__ . '/vendor/autoload.php'; // Composer autoload for PHPMailer
+require __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -77,11 +78,10 @@ if (!preg_match($passwordPattern, $password)) {
 }
 
 
-// DB connection
-$host = 'localhost';
-$db = 'u972101762_ss_db';
-$user = 'u972101762_ss_admin';
-$pass = 'MCADavis@2023#';
+$host = $_ENV['DB_HOST'];
+$db   = $_ENV['DB_NAME'];
+$user = $_ENV['DB_USER'];
+$pass = $_ENV['DB_PASS'];
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -105,8 +105,6 @@ try {
         exit;
     }
 
-    // $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    // Hash the user's password from input
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
 
@@ -119,23 +117,19 @@ try {
 
     $newUserId = $pdo->lastInsertId();
 
-    // ✅ Send verification email
-    // $verifyLink = "https://aquamarine-cobra-751684.hostingersite.com/verify-email?token=$token";
     $verifyLink = "http://localhost/squarestatusApp/api/verify-email.php?token=$token";
-
-
 
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host = 'smtp.hostinger.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'info@squarestatus.co.za';
-        $mail->Password = 'MCADavis@2023#';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
+        $mail->Host       = $_ENV['MAIL_HOST'];
+        $mail->SMTPAuth   = $_ENV['MAIL_AUTH'] === 'true';
+        $mail->Username   = $_ENV['MAIL_USER'];
+        $mail->Password   = $_ENV['MAIL_PASS'];
+        $mail->SMTPSecure = $_ENV['MAIL_SEC']; 
+        $mail->Port       = $_ENV['MAIL_PORT'];
 
-        $mail->setFrom('info@squarestatus.co.za', 'SquareStatus');
+        $mail->setFrom($_ENV['MAIL_USER'], 'SquareStatus');
         $mail->addAddress($email, $name);
 
         $mail->Subject = 'Verify Your Email - SquareStatus';

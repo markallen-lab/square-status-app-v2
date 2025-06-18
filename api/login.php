@@ -23,6 +23,10 @@ set_exception_handler(function ($e) {
 
 
 require_once 'jwt-utils.php';
+require_once __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 // api/login.php
 
 header("Content-Type: application/json");
@@ -59,11 +63,10 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// Database connection details — update accordingly
-$host = 'localhost';
-$db = 'u972101762_ss_db';
-$user = 'u972101762_ss_admin';
-$pass = 'MCADavis@2023#';
+$host = $_ENV['DB_HOST'];
+$db   = $_ENV['DB_NAME'];
+$user = $_ENV['DB_USER'];
+$pass = $_ENV['DB_PASS'];
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -80,7 +83,6 @@ try {
 
 file_put_contents('php://stderr', "Starting login process\n");
 try {
-    // Fetch user by email
     $stmt = $pdo->prepare("SELECT id, name, email, password_hash, role, email_verified FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -108,9 +110,7 @@ try {
     echo json_encode(["error" => "Invalid email or password"]);
     exit;
     }
-
-    // Authentication successful - generate a session token (optional)
-    // For example, JWT or random token — here just returning user info for simplicity
+    
     $token = createJWT([
         "id" => $user['id'],
         "email" => $user['email'],
