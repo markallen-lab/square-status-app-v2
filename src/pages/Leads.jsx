@@ -1,12 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -17,29 +11,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
 import { Edit, Trash2, PlusCircle, MessageSquare, Zap } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-
-const initialLeads = [];
 
 const pipelineStages = [
   'Prospecting',
@@ -52,7 +25,7 @@ const pipelineStages = [
 ];
 
 const Leads = () => {
-  const [leads, setLeads] = useState(initialLeads);
+  const [leads, setLeads] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentLead, setCurrentLead] = useState(null);
   const [newLeadData, setNewLeadData] = useState({
@@ -62,7 +35,60 @@ const Leads = () => {
     source: '',
     notes: '',
     pipelineStage: 'Prospecting',
+    status: 'New',
+    assignedTo: 'Unassigned',
+    lastContact: new Date().toISOString().split('T')[0],
   });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = () => {
+    fetch('http://localhost/squarestatusApp/api/getLeads.php')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.leads) {
+          setLeads(data.leads);
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch leads.',
+            variant: 'destructive',
+          });
+        }
+      })
+      .catch(() =>
+        toast({
+          title: 'Error',
+          description: 'Network or server error occurred.',
+          variant: 'destructive',
+        })
+      );
+  };
+
+  const openAddModal = () => {
+    setCurrentLead(null);
+    setNewLeadData({
+      name: '',
+      email: '',
+      phone: '',
+      source: '',
+      notes: '',
+      pipelineStage: 'Prospecting',
+      status: 'New',
+      assignedTo: 'Unassigned',
+      lastContact: new Date().toISOString().split('T')[0],
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (lead) => {
+    setCurrentLead(lead);
+    setNewLeadData({ ...lead });
+    setIsModalOpen(true);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -73,267 +99,264 @@ const Leads = () => {
     setNewLeadData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddLead = () => {
-    setLeads((prev) => [
-      ...prev,
-      {
-        ...newLeadData,
-        id: uuidv4(),
-        status: 'New',
-        assignedTo: 'Unassigned',
-        lastContact: new Date().toISOString().split('T')[0],
-      },
-    ]);
-    setNewLeadData({
-      name: '',
-      email: '',
-      phone: '',
-      source: '',
-      notes: '',
-      pipelineStage: 'Prospecting',
-    });
-    setIsModalOpen(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const url = currentLead
+      ? 'http://localhost/squarestatusApp/api/update-lead.php'
+      : 'http://localhost/squarestatusApp/api/add-lead.php';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLeadData),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: 'Success',
+          description: currentLead ? 'Lead updated.' : 'Lead added.',
+          variant: 'default',
+        });
+        setIsModalOpen(false);
+        setCurrentLead(null);
+        fetchLeads();
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to save lead',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Network or server error occurred',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const openEditModal = (lead) => {
-    setCurrentLead(lead);
-    setNewLeadData(lead);
-    setIsModalOpen(true);
-  };
+  const handleDeleteLead = async (id) => {
+    if (!confirm('Are you sure you want to delete this lead?')) return;
 
-  const handleEditLead = () => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === currentLead.id ? { ...l, ...newLeadData } : l))
-    );
-    setCurrentLead(null);
-    setNewLeadData({
-      name: '',
-      email: '',
-      phone: '',
-      source: '',
-      notes: '',
-      pipelineStage: 'Prospecting',
-    });
-    setIsModalOpen(false);
-  };
+    try {
+      const response = await fetch(
+        'http://localhost/squarestatusApp/api/delete-lead.php',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        }
+      );
+      const data = await response.json();
 
-  const handleDeleteLead = (id) => {
-    setLeads((prev) => prev.filter((lead) => lead.id !== id));
+      if (data.success) {
+        toast({
+          title: 'Deleted',
+          description: 'Lead deleted successfully.',
+          variant: 'default',
+        });
+        fetchLeads();
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to delete lead',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Network or server error occurred',
+        variant: 'destructive',
+      });
+    }
   };
 
   const convertToClient = (leadId) => {
-    console.log(`Converting lead ${leadId} to client`);
-    // Placeholder for conversion logic
+    toast({
+      title: 'Convert',
+      description: `Convert lead ${leadId} to client feature coming soon!`,
+    });
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setCurrentLead(null);
-                setNewLeadData({
-                  name: '',
-                  email: '',
-                  phone: '',
-                  source: '',
-                  notes: '',
-                  pipelineStage: 'Prospecting',
-                });
-              }}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Lead
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                {currentLead ? 'Edit Lead' : 'Add New Lead'}
-              </DialogTitle>
-              <DialogDescription>
-                {currentLead
-                  ? 'Update the lead information.'
-                  : 'Fill in the details for the new lead.'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={newLeadData.name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={newLeadData.email}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={newLeadData.phone}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="source" className="text-right">
-                  Source
-                </Label>
-                <Input
-                  id="source"
-                  name="source"
-                  value={newLeadData.source}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="pipelineStage" className="text-right">
-                  Pipeline Stage
-                </Label>
-                <Select
-                  name="pipelineStage"
-                  value={newLeadData.pipelineStage}
-                  onValueChange={(value) =>
-                    handleSelectChange('pipelineStage', value)
-                  }>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select stage" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pipelineStages.map((stage) => (
-                      <SelectItem key={stage} value={stage}>
-                        {stage}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="notes" className="text-right">
-                  Notes
-                </Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  value={newLeadData.notes}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
+          <Button onClick={openAddModal}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Lead
+          </Button>
+        </div>
+
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Lead Management</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Pipeline Stage</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Last Contact</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leads.length > 0 ? (
+                  leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.name}</TableCell>
+                      <TableCell>{lead.email}</TableCell>
+                      <TableCell>{lead.phone}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            lead.status === 'New'
+                              ? 'default'
+                              : lead.status === 'Contacted'
+                              ? 'secondary'
+                              : 'outline'
+                          }>
+                          {lead.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{lead.pipelineStage}</TableCell>
+                      <TableCell>{lead.source}</TableCell>
+                      <TableCell>{lead.lastContact}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEditModal(lead)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            console.log('Open notes for lead:', lead.id)
+                          }>
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteLead(lead.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan="8"
+                      className="text-center text-muted-foreground py-6">
+                      No leads found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-6 rounded shadow-lg max-w-lg w-full space-y-4">
+            <h2 className="text-xl font-bold mb-2">
+              {currentLead ? 'Edit Lead' : 'Add New Lead'}
+            </h2>
+
+            <input
+              type="text"
+              name="name"
+              placeholder="Name *"
+              value={newLeadData.name}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email *"
+              value={newLeadData.email}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Phone"
+              value={newLeadData.phone}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+            />
+            <input
+              type="text"
+              name="source"
+              placeholder="Source"
+              value={newLeadData.source}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+            />
+            <select
+              name="pipelineStage"
+              value={newLeadData.pipelineStage}
+              onChange={(e) =>
+                handleSelectChange('pipelineStage', e.target.value)
+              }
+              className="w-full border p-2 rounded"
+              required>
+              {pipelineStages.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+            <textarea
+              name="notes"
+              placeholder="Notes"
+              value={newLeadData.notes}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+              rows={3}
+            />
+
+            <div className="flex justify-end space-x-4">
               <Button
                 type="button"
-                onClick={currentLead ? handleEditLead : handleAddLead}>
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="default">
                 {currentLead ? 'Save Changes' : 'Add Lead'}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Lead Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Pipeline Stage</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Last Contact</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>{lead.email}</TableCell>
-                  <TableCell>{lead.phone}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        lead.status === 'New'
-                          ? 'default'
-                          : lead.status === 'Contacted'
-                          ? 'secondary'
-                          : 'outline'
-                      }>
-                      {lead.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{lead.pipelineStage}</TableCell>
-                  <TableCell>{lead.source}</TableCell>
-                  <TableCell>{lead.lastContact}</TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openEditModal(lead)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() =>
-                        console.log('Open notes for lead:', lead.id)
-                      }>
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="icon"
-                      onClick={() => convertToClient(lead.id)}
-                      className="bg-green-500 hover:bg-green-600">
-                      <Zap className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeleteLead(lead.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </motion.div>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
   );
 };
 

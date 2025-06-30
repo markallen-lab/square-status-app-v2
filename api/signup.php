@@ -1,6 +1,32 @@
 <?php
+// --------------------
+// ✅ CORS HEADERS FIRST
+// --------------------
+header("Access-Control-Allow-Origin: http://localhost:5173"); // or * for dev
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json; charset=UTF-8");
+
+// ---------------------------
+// ✅ STOP if preflight request
+// ---------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// ---------------------------
+// ✅ Start buffering and error reporting
+// ---------------------------
 ob_start();
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// ---------------------------
+// ✅ Autoloader check
+// ---------------------------
 if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
     error_log("Autoload file not found!");
     http_response_code(500);
@@ -10,31 +36,22 @@ if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
     error_log("Autoload file found and included.");
 }
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// api/signup.php
-
 require __DIR__ . '/vendor/autoload.php';
-
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+
+error_log("DB_HOST: " . ($_ENV['DB_HOST'] ?? 'NOT SET'));
+error_log("DB_NAME: " . ($_ENV['DB_NAME'] ?? 'NOT SET'));
+error_log("DB_USER: " . ($_ENV['DB_USER'] ?? 'NOT SET'));
+error_log("DB_PASS: " . (isset($_ENV['DB_PASS']) ? 'SET' : 'NOT SET'));
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
+// ---------------------------
+// ✅ Parse input
+// ---------------------------
 $data = json_decode(file_get_contents("php://input"), true);
 error_log("Received data: " . print_r($data, true));
 
@@ -50,6 +67,9 @@ $phone = trim($data['phone'] ?? '');
 $password = $data['password'] ?? '';
 $role = $data['role'] ?? 'user';
 
+// ---------------------------
+// ✅ Validate input
+// ---------------------------
 if (!$name || !$email || !$phone || !$password) {
     http_response_code(400);
     echo json_encode(["error" => "Please fill all required fields"]);
@@ -77,6 +97,11 @@ if (!preg_match($passwordPattern, $password)) {
     exit;
 }
 
+// ---------------------------
+// ✅ Connect to database
+// ---------------------------
+error_log("DB vars: HOST=$_ENV[DB_HOST], NAME=$_ENV[DB_NAME], USER=$_ENV[DB_USER], PASS=" . (isset($_ENV['DB_PASS']) ? 'SET' : 'NOT SET'));
+
 
 $host = $_ENV['DB_HOST'];
 $db   = $_ENV['DB_NAME'];
@@ -96,6 +121,9 @@ try {
     exit;
 }
 
+// ---------------------------
+// ✅ Create user
+// ---------------------------
 try {
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
@@ -106,19 +134,18 @@ try {
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-
     $token = bin2hex(random_bytes(32));
     $expires = date('Y-m-d H:i:s', strtotime('+1 day'));
 
     $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, role, email_verified, verification_token, verification_token_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
     $stmt->execute([$name, $email, $phone, $hashedPassword, $role, $token, $expires]);
 
-
     $newUserId = $pdo->lastInsertId();
-
     $verifyLink = "http://localhost/squarestatusApp/api/verify-email.php?token=$token";
 
+    // ---------------------------
+    // ✅ Send verification email
+    // ---------------------------
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
@@ -155,12 +182,9 @@ try {
 } catch (Exception $e) {
     error_log("Unhandled exception: " . $e->getMessage());
     http_response_code(500);
-    header("Content-Type: application/json");
     ob_end_clean();
     echo json_encode(["error" => "Unexpected server error"]);
     exit;
 }
 
-
-ob_end_clean(); // Clean buffer to prevent any non-JSON output
-
+ob_end_clean();

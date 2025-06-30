@@ -21,14 +21,6 @@ set_exception_handler(function ($e) {
     exit;
 });
 
-
-require_once 'jwt-utils.php';
-require_once __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// api/login.php
-
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -39,7 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Get JSON input
+require_once 'jwt-utils.php';
+require_once __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!$data) {

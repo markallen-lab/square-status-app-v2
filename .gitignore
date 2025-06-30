@@ -9,3 +9,5 @@ test-jwt.php
 credentials.json
 api/vendor/
 /vendor/
+api/testmail.php
+api/dbtest.php

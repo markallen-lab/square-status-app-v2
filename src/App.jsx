@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,11 +7,12 @@ import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
 import Dashboard from '@/pages/Dashboard';
 import VerifyEmail from '@/pages/VerifyEmail';
-import VerifyPhone from '@/pages/VerifyPhone';
+// import VerifyPhone from '@/pages/VerifyPhone';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import NotFound from '@/pages/NotFound';
 import Clients from '@/pages/Clients';
+import ClientDetails from './pages/ClientDetails';
 import Leads from '@/pages/Leads';
 import Tasks from '@/pages/Tasks';
 import Projects from '@/pages/Projects';
@@ -30,27 +30,30 @@ import HostingDomains from '@/pages/Hosting/Domains';
 import HostingPackagesList from '@/pages/Hosting/PackagesList';
 import PackageDetail from '@/pages/Hosting/PackageDetail';
 
-
 // Layout
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DataProvider } from '@/contexts/DataContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 
-const ProtectedRoute = ({ children, adminOnly = false, superAdminOnly = false }) => {
+const ProtectedRoute = ({
+  children,
+  adminOnly = false,
+  superAdminOnly = false,
+}) => {
   const { currentUser } = useAuth();
-  
+
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
-  if (superAdminOnly && currentUser.role !== 'super-admin') {
-     return <Navigate to="/dashboard" replace />; 
+  if (superAdminOnly && currentUser.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
-  
+
   if (adminOnly && !['admin', 'super-admin'].includes(currentUser.role)) {
-    return <Navigate to="/dashboard" replace />; 
+    return <Navigate to="/dashboard" replace />;
   }
-  
+
   return children;
 };
 
@@ -63,159 +66,215 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/verify-phone" element={<VerifyPhone />} />
+          {/* <Route path="/verify-phone" element={<VerifyPhone />} /> */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          
-          <Route 
-            path="/dashboard" 
+
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Dashboard /></DashboardLayout>
+                <DashboardLayout>
+                  <Dashboard />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/clients" 
+          <Route
+            path="/clients"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Clients /></DashboardLayout>
+                <DashboardLayout>
+                  <Clients />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/leads" 
+          <Route
+            path="/clients/:id"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Leads /></DashboardLayout>
+                <DashboardLayout>
+                  <ClientDetails />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/tasks" 
+          <Route
+            path="/leads"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Tasks /></DashboardLayout>
+                <DashboardLayout>
+                  <Leads />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/projects" 
+          <Route
+            path="/leads/:id"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Projects /></DashboardLayout>
+                <DashboardLayout>
+                  <Leads />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/collections" 
+          <Route
+            path="/tasks"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Collections /></DashboardLayout>
+                <DashboardLayout>
+                  <Tasks />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/meetings" 
+          <Route
+            path="/projects"
             element={
               <ProtectedRoute>
-                <DashboardLayout><MeetingsPage /></DashboardLayout>
+                <DashboardLayout>
+                  <Projects />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/hosting" 
-            element={<Navigate to="/hosting/domains" replace />} 
-          />
-          <Route 
-            path="/hosting/domains" 
+          <Route
+            path="/collections"
             element={
               <ProtectedRoute>
-                <DashboardLayout><HostingDomains /></DashboardLayout>
+                <DashboardLayout>
+                  <Collections />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/hosting/packages" 
+          <Route
+            path="/meetings"
             element={
               <ProtectedRoute>
-                <DashboardLayout><HostingPackagesList /></DashboardLayout>
+                <DashboardLayout>
+                  <MeetingsPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/hosting/packages/:packageId" 
+          <Route
+            path="/hosting"
+            element={<Navigate to="/hosting/domains" replace />}
+          />
+          <Route
+            path="/hosting/domains"
             element={
               <ProtectedRoute>
-                <DashboardLayout><PackageDetail /></DashboardLayout>
+                <DashboardLayout>
+                  <HostingDomains />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/hosting/packages"
             element={
               <ProtectedRoute>
-                <DashboardLayout><Profile /></DashboardLayout>
+                <DashboardLayout>
+                  <HostingPackagesList />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-           <Route 
-            path="/settings" 
+          <Route
+            path="/hosting/packages/:packageId"
             element={
               <ProtectedRoute>
-                <DashboardLayout><SettingsPage /></DashboardLayout>
+                <DashboardLayout>
+                  <PackageDetail />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/users/accounts" 
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Profile />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <SettingsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/accounts"
             element={
               <ProtectedRoute superAdminOnly={true}>
-                <DashboardLayout><UserAccounts /></DashboardLayout>
+                <DashboardLayout>
+                  <UserAccounts />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/users/status" 
+          <Route
+            path="/users/status"
             element={
               <ProtectedRoute superAdminOnly={true}>
-                <DashboardLayout><UserStatus /></DashboardLayout>
+                <DashboardLayout>
+                  <UserStatus />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/security/signup-settings" 
+          <Route
+            path="/security/signup-settings"
             element={
               <ProtectedRoute superAdminOnly={true}>
-                <DashboardLayout><SignupSettings /></DashboardLayout>
+                <DashboardLayout>
+                  <SignupSettings />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/marketing/campaigns" 
+          <Route
+            path="/marketing/campaigns"
             element={
               <ProtectedRoute>
-                <DashboardLayout><MarketingCampaigns /></DashboardLayout>
+                <DashboardLayout>
+                  <MarketingCampaigns />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/marketing/email" 
+          <Route
+            path="/marketing/email"
             element={
               <ProtectedRoute>
-                <DashboardLayout><MarketingEmail /></DashboardLayout>
+                <DashboardLayout>
+                  <MarketingEmail />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/marketing/social" 
+          <Route
+            path="/marketing/social"
             element={
               <ProtectedRoute>
-                <DashboardLayout><MarketingSocial /></DashboardLayout>
+                <DashboardLayout>
+                  <MarketingSocial />
+                </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </DataProvider>

@@ -48,5 +48,6 @@ if (new DateTime() > new DateTime($user['verification_token_expires'])) {
 $update = $pdo->prepare("UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expires = NULL WHERE id = ?");
 $update->execute([$user['id']]);
 
-echo json_encode(['status' => 'success']);
+header('Location: http://localhost/squarestatusApp/login?verified=true');
 exit;
+
