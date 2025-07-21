@@ -111,8 +111,11 @@ const Leads = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLeadData),
       });
-      const data = await response.json();
 
+      const text = await response.text(); // ✅ capture raw response
+      console.log('Raw response:', text);
+
+      const data = JSON.parse(text); // now try to parse
       if (data.success) {
         toast({
           title: 'Success',
@@ -129,7 +132,8 @@ const Leads = () => {
           variant: 'destructive',
         });
       }
-    } catch {
+    } catch (err) {
+      console.error('Fetch error:', err);
       toast({
         title: 'Error',
         description: 'Network or server error occurred',
@@ -173,13 +177,6 @@ const Leads = () => {
         variant: 'destructive',
       });
     }
-  };
-
-  const convertToClient = (leadId) => {
-    toast({
-      title: 'Convert',
-      description: `Convert lead ${leadId} to client feature coming soon!`,
-    });
   };
 
   return (

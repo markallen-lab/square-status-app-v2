@@ -1,0 +1,46 @@
+<?php
+require_once __DIR__ . '/vendor/autoload.php';
+
+header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+try {
+  $pdo = new PDO(
+    "mysql:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_NAME']}",
+    $_ENV['DB_USER'],
+    $_ENV['DB_PASS'],
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+  );
+
+  $data = json_decode(file_get_contents("php://input"), true);
+
+  if (!$data || empty($data['id'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing task ID']);
+    exit;
+  }
+
+  $stmt = $pdo->prepare("UPDATE tasks SET title=?, project=?, assignedTo=?, priority=?, status=?, dueDate=?, clientId=?, timeTracked=?, timerRunning=? WHERE id=?");
+  $stmt->execute([
+    $data['title'],
+    $data['project'],
+    $data['assignedTo'],
+    $data['priority'],
+    $data['status'],
+    $data['dueDate'],
+    $data['clientId'],
+    $data['timeTracked'],
+    $data['timerRunning'],
+    $data['id']
+  ]);
+
+  echo json_encode(['success' => true]);
+} catch (Exception $e) {
+  http_response_code(500);
+  echo json_encode(['error' => 'Failed to update task']);
+}

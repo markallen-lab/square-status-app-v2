@@ -207,123 +207,129 @@ const Clients = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto py-10">
           <form
             onSubmit={handleSubmit}
-            className="bg-white p-6 rounded shadow-lg max-w-lg w-full space-y-4">
-            <h2 className="text-xl font-bold mb-2">Add New Client</h2>
+            className="bg-white p-6 rounded shadow-lg w-full max-w-4xl space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Add New Client</h2>
 
-            <input
-              type="text"
-              name="name"
-              placeholder="Contact First Name *"
-              value={newClient.name}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-              required
-            />
-            <input
-              type="text"
-              name="lastname"
-              placeholder="Contact Last Name"
-              value={newClient.lastname}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Contact Email *"
-              value={newClient.email}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-              required
-            />
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Contact Phone"
-              value={newClient.phone}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="company_name"
-              placeholder="Company Name *"
-              value={newClient.company_name}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-              required
-            />
-            <input
-              type="email"
-              name="company_email"
-              placeholder="Company Email"
-              value={newClient.company_email}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="company_address"
-              placeholder="Company Address"
-              value={newClient.company_address}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="tel"
-              name="company_phone"
-              placeholder="Company Phone"
-              value={newClient.company_phone}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="tel"
-              name="company_fax"
-              placeholder="Company Fax"
-              value={newClient.company_fax}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="company_industry"
-              placeholder="Company Industry"
-              value={newClient.company_industry}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="domain"
-              placeholder="Domain"
-              value={newClient.domain}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="package"
-              placeholder="Package"
-              value={newClient.package}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* Grid Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Contact First Name *"
+                value={newClient.name}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="text"
+                name="lastname"
+                placeholder="Contact Last Name"
+                value={newClient.lastname}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Contact Email *"
+                value={newClient.email}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Contact Phone"
+                value={newClient.phone}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                pattern="[\d\s+\-()]{7,}"
+                title="Valid phone number required"
+              />
+              <input
+                type="text"
+                name="company_name"
+                placeholder="Company Name *"
+                value={newClient.company_name}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="email"
+                name="company_email"
+                placeholder="Company Email"
+                value={newClient.company_email}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="company_address"
+                placeholder="Company Address"
+                value={newClient.company_address}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="tel"
+                name="company_phone"
+                placeholder="Company Phone"
+                value={newClient.company_phone}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                pattern="[\d\s+\-()]{7,}"
+              />
+              <input
+                type="tel"
+                name="company_fax"
+                placeholder="Company Fax"
+                value={newClient.company_fax}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="company_industry"
+                placeholder="Company Industry"
+                value={newClient.company_industry}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="domain"
+                placeholder="Domain"
+                value={newClient.domain}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="package"
+                placeholder="Package"
+                value={newClient.package}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+              />
+              <select
+                name="status"
+                value={newClient.status}
+                onChange={handleInputChange}
+                className="border p-2 rounded"
+                required>
+                <option value="Pending">Pending</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
 
-            <select
-              name="status"
-              value={newClient.status}
-              onChange={handleInputChange}
-              className="w-full border p-2 rounded"
-              required>
-              <option value="Pending">Pending</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-
+            {/* Buttons */}
             <div className="flex justify-end space-x-4">
               <Button
                 type="button"

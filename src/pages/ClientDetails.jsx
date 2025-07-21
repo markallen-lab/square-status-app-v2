@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,10 @@ const ClientDetails = () => {
   const { id } = useParams();
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`http://localhost/squarestatusApp/api/client.php?id=${id}`)
@@ -138,6 +143,67 @@ const ClientDetails = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {isEditModalOpen && editingClient && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto py-10">
+          <form
+            onSubmit={handleEditSubmit}
+            className="bg-white p-6 rounded shadow-lg w-full max-w-3xl space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Edit Client</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="First Name"
+                value={editingClient.name}
+                onChange={handleEditInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="text"
+                name="lastname"
+                placeholder="Last Name"
+                value={editingClient.lastname}
+                onChange={handleEditInputChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={editingClient.email}
+                onChange={handleEditInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="text"
+                name="company_name"
+                placeholder="Company Name"
+                value={editingClient.company_name}
+                onChange={handleEditInputChange}
+                className="border p-2 rounded"
+                required
+              />
+              {/* Add more fields as needed */}
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="default">
+                Update
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 
@@ -180,8 +246,38 @@ const ClientDetails = () => {
   }
 
   function handleEdit() {
-    // Navigate to an edit page or open a modal — up to you
-    alert('Edit function to be implemented.');
+    setEditingClient(client); // pass the current client into the edit form
+    setIsEditModalOpen(true); // open the modal
+  }
+
+  function handleEditInputChange(e) {
+    const { name, value } = e.target;
+    setEditingClient((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleEditSubmit(e) {
+    e.preventDefault();
+
+    fetch('http://localhost/squarestatusApp/api/update-client.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingClient),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert('Client updated successfully');
+          setClient(editingClient); // update displayed client info
+          setIsEditModalOpen(false); // close modal
+        } else {
+          alert('Failed to update client.');
+          console.error(data.error);
+        }
+      })
+      .catch((err) => {
+        console.error('Update failed:', err);
+        alert('An error occurred while updating the client.');
+      });
   }
 };
 

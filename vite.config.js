@@ -182,7 +182,7 @@ logger.error = (msg, options) => {
 };
 
 export default defineConfig({
-  base: '/squarestatusApp/',
+  base: '/',
   customLogger: logger,
   plugins: [react(), addTransformIndexHtml],
   server: {

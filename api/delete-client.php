@@ -33,7 +33,14 @@ try {
     $stmt = $pdo->prepare("DELETE FROM client WHERE id = ?");
     $stmt->execute([$id]);
 
-    echo json_encode(['success' => true]);
+        echo json_encode([
+  'success' => true,
+  'message' => 'Client deleted'
+]);
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'error' => 'Database error']);
+       http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to delete client'
+    ]);
 }
