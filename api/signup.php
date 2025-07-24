@@ -1,32 +1,6 @@
 <?php
-// --------------------
-// ✅ CORS HEADERS FIRST
-// --------------------
-header("Access-Control-Allow-Origin: http://localhost:5173"); // or * for dev
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
+require_once 'cors.php';
 
-// ---------------------------
-// ✅ STOP if preflight request
-// ---------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-// ---------------------------
-// ✅ Start buffering and error reporting
-// ---------------------------
-ob_start();
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// ---------------------------
-// ✅ Autoloader check
-// ---------------------------
 if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
     error_log("Autoload file not found!");
     http_response_code(500);

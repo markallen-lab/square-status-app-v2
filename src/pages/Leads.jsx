@@ -112,10 +112,9 @@ const Leads = () => {
         body: JSON.stringify(newLeadData),
       });
 
-      const text = await response.text(); // ✅ capture raw response
-      console.log('Raw response:', text);
+      const text = await response.text();
 
-      const data = JSON.parse(text); // now try to parse
+      const data = JSON.parse(text);
       if (data.success) {
         toast({
           title: 'Success',

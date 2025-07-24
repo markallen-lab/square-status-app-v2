@@ -1,36 +1,5 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-    http_response_code(500);
-    echo json_encode([
-        "error" => "PHP error",
-        "details" => "$errstr in $errfile on line $errline"
-    ]);
-    exit;
-});
-
-set_exception_handler(function ($e) {
-    http_response_code(500);
-    echo json_encode([
-        "error" => "Unhandled exception",
-        "details" => $e->getMessage()
-    ]);
-    exit;
-});
-
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
+require_once 'cors.php';
 require_once 'jwt-utils.php';
 require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);

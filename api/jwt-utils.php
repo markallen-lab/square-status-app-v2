@@ -12,7 +12,7 @@ $JWT_SECRET = $_ENV['JWT_SECRET'];
 function createJWT($payload) {
     global $JWT_SECRET;
     $issuedAt = time();
-    $expiration = $issuedAt + (60 * 60 * 24); // 24 hours
+    $expiration = $issuedAt + (60 * 60 * 24);
 
     $token = array_merge($payload, [
         "iat" => $issuedAt,

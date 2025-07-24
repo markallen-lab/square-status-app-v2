@@ -1,5 +1,5 @@
 import * as storageService from './storageService';
-
+const API_BASE = import.meta.env.VITE_API_URL;
 const USERS_STORAGE_KEY = 'users';
 const CURRENT_USER_STORAGE_KEY = 'currentUser';
 const EMAIL_VERIFICATION_PREFIX = 'emailVerification_';
@@ -17,7 +17,6 @@ export const saveCurrentUserToStorage = (user) =>
   storageService.setItem(CURRENT_USER_STORAGE_KEY, user);
 export const removeCurrentUserFromStorage = () =>
   storageService.removeItem(CURRENT_USER_STORAGE_KEY);
-
 export const getVerificationCode = (type, identifier) => {
   const prefix =
     type === 'email' ? EMAIL_VERIFICATION_PREFIX : PHONE_VERIFICATION_PREFIX;
@@ -55,7 +54,7 @@ export const registerUser = async (
   const newUser = {
     id: Date.now().toString(),
     email,
-    password, // In a real app, hash this password
+    password,
     name,
     phone,
     role:
@@ -72,22 +71,15 @@ export const registerUser = async (
 };
 
 export const authenticateUser = async (email, password) => {
-  const response = await fetch(
-    'http://localhost/squarestatusApp/api/login.php',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    }
-  );
-
+  const response = await fetch(`${API_BASE}/auth/login.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
   const data = await response.json();
-  console.log(!data ? 'Data not collected' : data);
-
   if (!response.ok || !data.user) {
     throw new Error(data?.error || 'Invalid email or password');
   }
-
   return data.user;
 };
 
@@ -95,7 +87,6 @@ export const confirmEmailVerification = async (email, code) => {
   const storedCode = getVerificationCode('email', email);
   if (!storedCode || storedCode !== code)
     throw new Error('Invalid verification code');
-
   const users = getUsersFromStorage();
   const updatedUsers = users.map((u) =>
     u.email === email ? { ...u, emailVerified: true } : u
@@ -121,14 +112,12 @@ export const confirmPhoneVerification = async (phone, code, email) => {
   const storedCode = getVerificationCode('phone', phone);
   if (!storedCode || storedCode !== code)
     throw new Error('Invalid verification code');
-
   let users = getUsersFromStorage();
   let loggedInUser = null;
   const updatedUsers = users.map((u) => {
     if (u.phone === phone) {
       const updatedUser = { ...u, phoneVerified: true };
       if (email && u.email === email && u.emailVerified) {
-        // User is verifying phone after email during login/signup flow
         const { password: _, ...userToLogin } = updatedUser;
         loggedInUser = userToLogin;
       }
@@ -148,11 +137,7 @@ export const confirmPhoneVerification = async (phone, code, email) => {
 export const initiatePasswordReset = async (email) => {
   const users = getUsersFromStorage();
   const user = users.find((u) => u.email === email);
-  if (!user) {
-    // Don't reveal if user exists for security, but for demo we can throw
-    console.warn(`Password reset requested for non-existent email: ${email}`);
-    return; // Silently fail or throw new Error('User not found'); for stricter check
-  }
+  if (!user) return;
   const token = `${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .substring(2)}`;
@@ -160,10 +145,7 @@ export const initiatePasswordReset = async (email) => {
     `${PASSWORD_RESET_TOKEN_PREFIX}${token}`,
     { email: user.email, expires: Date.now() + 3600000 },
     3600
-  ); // 1 hour expiry
-  console.log(
-    `Password reset token for ${email}: ${token} (Link: /reset-password/${token})`
-  ); // Simulate sending email
+  );
   return token;
 };
 
@@ -174,12 +156,10 @@ export const completePasswordReset = async (token, newPassword) => {
   if (!tokenData || tokenData.expires < Date.now()) {
     throw new Error('Invalid or expired password reset token.');
   }
-
   const users = getUsersFromStorage();
   const userIndex = users.findIndex((u) => u.email === tokenData.email);
   if (userIndex === -1) throw new Error('User not found for this token.');
-
-  users[userIndex].password = newPassword; // In real app, hash this
+  users[userIndex].password = newPassword;
   saveUsersToStorage(users);
   storageService.removeItem(`${PASSWORD_RESET_TOKEN_PREFIX}${token}`);
   return true;

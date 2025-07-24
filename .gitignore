@@ -11,3 +11,5 @@ api/vendor/
 /vendor/
 api/testmail.php
 api/dbtest.php
+project/.env
+api/.env

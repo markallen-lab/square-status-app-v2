@@ -37,7 +37,6 @@ const VerifyEmail = () => {
     const verifyEmailToken = async () => {
       try {
         const response = await fetch(
-          // `/api/verify-email.php?token=${encodeURIComponent(token)}`,
           `http://localhost/squarestatusApp/api/verify-email.php?token=${encodeURIComponent(
             token
           )}`,
@@ -50,11 +49,7 @@ const VerifyEmail = () => {
         );
 
         if (response.ok) {
-          // Backend might redirect or respond with status, but your PHP redirects to /verify-result.html?
-          // So here let's call an API endpoint instead that returns JSON — or you need to create one.
-          // For now, let's assume response JSON { status: 'success' | 'expired' | 'invalid' | ... }
           const data = await response.json();
-
           setStatus(data.status);
           switch (data.status) {
             case 'success':

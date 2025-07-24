@@ -7,9 +7,6 @@ const DISCOVERY_DOCS = [
 ];
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
-console.log('CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
-console.log('API_KEY:', import.meta.env.VITE_GOOGLE_API_KEY);
-
 export const initGoogleAPI = () =>
   new Promise((resolve, reject) => {
     // ✅ Wait until gapi exists in window
