@@ -12,11 +12,12 @@ const ClientDetails = () => {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost/squarestatusApp/api/client.php?id=${id}`)
+    fetch(`${apiUrl}/client.php?id=${id}`)
       .then((res) => res.json())
       .then((data) => {
         setClient(data);
@@ -208,7 +209,7 @@ const ClientDetails = () => {
   );
 
   function updateStatus(newStatus) {
-    fetch(`http://localhost/squarestatusApp/api/update-status.php`, {
+    fetch(`${apiUrl}/update-status.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: client.id, status: newStatus }),
@@ -223,7 +224,7 @@ const ClientDetails = () => {
 
   function handleDelete() {
     if (confirm('Are you sure you want to delete this client?')) {
-      fetch(`http://localhost/squarestatusApp/api/delete-client.php`, {
+      fetch(`${apiUrl}/delete-client.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: client.id }),
@@ -258,7 +259,7 @@ const ClientDetails = () => {
   function handleEditSubmit(e) {
     e.preventDefault();
 
-    fetch('http://localhost/squarestatusApp/api/update-client.php', {
+    fetch(`${apiUrl}/update-client.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editingClient),

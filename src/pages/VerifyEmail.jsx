@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const VerifyEmail = () => {
   const location = useLocation();
@@ -37,9 +38,7 @@ const VerifyEmail = () => {
     const verifyEmailToken = async () => {
       try {
         const response = await fetch(
-          `http://localhost/squarestatusApp/api/verify-email.php?token=${encodeURIComponent(
-            token
-          )}`,
+          `${apiUrl}/verify-email.php?token=${encodeURIComponent(token)}`,
           {
             method: 'GET',
             headers: {

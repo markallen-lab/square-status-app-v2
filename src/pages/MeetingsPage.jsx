@@ -48,7 +48,7 @@ import { Textarea } from '@/components/ui/textarea';
 //   SelectTrigger,
 //   SelectValue,
 // } from '@/components/ui/select';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const MeetingForm = ({ meetingData, onSubmit, onCancel, clients }) => {
   const [title, setTitle] = useState(meetingData?.title || '');
   const [date, setDate] = useState(meetingData?.date || '');
@@ -295,9 +295,7 @@ const MeetingsPage = () => {
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
-        const response = await fetch(
-          'http://localhost/squarestatusApp/api/meetings/get_all.php'
-        );
+        const response = await fetch(`${apiUrl}/meetings/get_all.php`);
         const data = await response.json();
         if (Array.isArray(data.meetings)) {
           setMeetings(data.meetings);
@@ -315,8 +313,8 @@ const MeetingsPage = () => {
   const handleAddOrEditMeeting = async (meetingData) => {
     const isUpdate = Boolean(editingMeeting?.id);
     const endpoint = isUpdate
-      ? 'http://localhost/squarestatusApp/api/meetings/update.php'
-      : 'http://localhost/squarestatusApp/api/meetings/create.php';
+      ? `${apiUrl}/meetings/update.php`
+      : `${apiUrl}/meetings/create.php`;
 
     try {
       const response = await fetch(endpoint, {
@@ -374,14 +372,11 @@ const MeetingsPage = () => {
 
   const handleDeleteMeeting = async (meetingId) => {
     try {
-      const response = await fetch(
-        'http://localhost/squarestatusApp/api/meetings/delete.php',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: meetingId }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/meetings/delete.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: meetingId }),
+      });
 
       const result = await response.json();
       if (!response.ok) throw new Error('Network response was not ok');

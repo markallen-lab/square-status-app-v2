@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const Signup = () => {
   const { signup, appSettings } = useAuth();
@@ -84,24 +85,21 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        'http://localhost/squarestatusApp/api/signup.php',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-            role: appSettings.enableRoleSelectionOnSignup
-              ? formData.role
-              : 'user',
-          }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/signup.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: appSettings.enableRoleSelectionOnSignup
+            ? formData.role
+            : 'user',
+        }),
+      });
       const text = await response.text();
       let data;
       try {

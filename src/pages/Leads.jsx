@@ -40,13 +40,14 @@ const Leads = () => {
     lastContact: new Date().toISOString().split('T')[0],
   });
   const { toast } = useToast();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchLeads();
   }, []);
 
   const fetchLeads = () => {
-    fetch('http://localhost/squarestatusApp/api/getLeads.php')
+    fetch(`${apiUrl}/getLeads.php`)
       .then((res) => res.json())
       .then((data) => {
         if (data.leads) {
@@ -102,8 +103,8 @@ const Leads = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = currentLead
-      ? 'http://localhost/squarestatusApp/api/update-lead.php'
-      : 'http://localhost/squarestatusApp/api/add-lead.php';
+      ? `${apiUrl}/update-lead.php`
+      : `${apiUrl}/add-lead.php`;
 
     try {
       const response = await fetch(url, {
@@ -145,14 +146,11 @@ const Leads = () => {
     if (!confirm('Are you sure you want to delete this lead?')) return;
 
     try {
-      const response = await fetch(
-        'http://localhost/squarestatusApp/api/delete-lead.php',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/delete-lead.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
       const data = await response.json();
 
       if (data.success) {

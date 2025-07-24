@@ -1,27 +1,22 @@
 <?php
+ob_start();
 require_once 'cors.php';
 
 if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
     error_log("Autoload file not found!");
     http_response_code(500);
-    echo json_encode(["error" => "Server error: autoload.php missing"]);
+    echo json_encode(["error" => "Server error"]);
     exit;
-} else {
-    error_log("Autoload file found and included.");
 }
 
 require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-error_log("DB_HOST: " . ($_ENV['DB_HOST'] ?? 'NOT SET'));
-error_log("DB_NAME: " . ($_ENV['DB_NAME'] ?? 'NOT SET'));
-error_log("DB_USER: " . ($_ENV['DB_USER'] ?? 'NOT SET'));
-error_log("DB_PASS: " . (isset($_ENV['DB_PASS']) ? 'SET' : 'NOT SET'));
-
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+header('Content-Type: application/json');
 
 // ---------------------------
 // ✅ Parse input
@@ -44,52 +39,42 @@ $role = $data['role'] ?? 'user';
 // ---------------------------
 // ✅ Validate input
 // ---------------------------
-if (!$name || !$email || !$phone || !$password) {
-    http_response_code(400);
-    echo json_encode(["error" => "Please fill all required fields"]);
-    exit;
-}
+$errors = [];
+
+if (!$name) $errors[] = "Name is required";
+if (!$email) $errors[] = "Email is required";
+if (!$phone) $errors[] = "Phone is required";
+if (!$password) $errors[] = "Password is required";
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(["error" => "Invalid email address"]);
-    exit;
+    $errors[] = "Invalid email format";
 }
 
 if (!preg_match('/^\+?[0-9]{7,15}$/', $phone)) {
-    http_response_code(400);
-    echo json_encode(["error" => "Invalid phone number"]);
-    exit;
+    $errors[] = "Invalid phone number format";
 }
 
 $passwordPattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/';
 if (!preg_match($passwordPattern, $password)) {
+    $errors[] = "Password must be at least 8 characters long, and include uppercase, lowercase, number, and symbol.";
+}
+
+if (!empty($errors)) {
     http_response_code(400);
-    echo json_encode([
-        "error" => "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
-    ]);
+    echo json_encode(["error" => implode("; ", $errors)]);
     exit;
 }
 
 // ---------------------------
 // ✅ Connect to database
 // ---------------------------
-error_log("DB vars: HOST=$_ENV[DB_HOST], NAME=$_ENV[DB_NAME], USER=$_ENV[DB_USER], PASS=" . (isset($_ENV['DB_PASS']) ? 'SET' : 'NOT SET'));
-
-
-$host = $_ENV['DB_HOST'];
-$db   = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-
+$dsn = "mysql:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_NAME']};charset=utf8mb4";
 try {
-    $pdo = new PDO($dsn, $user, $pass, [
+    $pdo = new PDO($dsn, $_ENV['DB_USER'], $_ENV['DB_PASS'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 } catch (PDOException $e) {
+    error_log("DB connection failed: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(["error" => "Database connection failed"]);
     exit;
@@ -111,14 +96,18 @@ try {
     $token = bin2hex(random_bytes(32));
     $expires = date('Y-m-d H:i:s', strtotime('+1 day'));
 
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, role, email_verified, verification_token, verification_token_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
+    $stmt = $pdo->prepare("
+        INSERT INTO users (name, email, phone, password_hash, role, email_verified, verification_token, verification_token_expires)
+        VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+    ");
     $stmt->execute([$name, $email, $phone, $hashedPassword, $role, $token, $expires]);
 
     $newUserId = $pdo->lastInsertId();
-    $verifyLink = "http://localhost/squarestatusApp/api/verify-email.php?token=$token";
+    $domain = $_ENV['FRONTEND_URL'] ?? 'https://app.squarestatus.co.za';
+    $verifyLink = "$domain/api/verify-email.php?token=$token";
 
     // ---------------------------
-    // ✅ Send verification email
+    // ✅ Send email
     // ---------------------------
     $mail = new PHPMailer(true);
     try {
@@ -127,25 +116,27 @@ try {
         $mail->SMTPAuth   = $_ENV['MAIL_AUTH'] === 'true';
         $mail->Username   = $_ENV['MAIL_USER'];
         $mail->Password   = $_ENV['MAIL_PASS'];
-        $mail->SMTPSecure = $_ENV['MAIL_SEC']; 
+        $mail->SMTPSecure = $_ENV['MAIL_SEC'];
         $mail->Port       = $_ENV['MAIL_PORT'];
 
         $mail->setFrom($_ENV['MAIL_USER'], 'SquareStatus');
         $mail->addAddress($email, $name);
 
+        $mail->isHTML(false);
         $mail->Subject = 'Verify Your Email - SquareStatus';
-        $mail->Body = "Hi $name,\n\nThank you for signing up. Please verify your email by clicking the link below:\n\n$verifyLink\n\nThis link expires in 24 hours.";
+        $mail->Body = "Hi $name,\n\nThank you for signing up. Please verify your email:\n\n$verifyLink\n\nThis link expires in 24 hours.";
 
         $mail->send();
     } catch (Exception $e) {
+        error_log("Email send failed: " . $mail->ErrorInfo);
         http_response_code(500);
-        echo json_encode(["error" => "User created but failed to send verification email: " . $mail->ErrorInfo]);
+        echo json_encode(["error" => "User created but email failed: " . $mail->ErrorInfo]);
         exit;
     }
 
     http_response_code(201);
     echo json_encode([
-        "message" => "User created successfully. Please check your email to verify your account.",
+        "message" => "User created. Please verify your email.",
         "userId" => $newUserId,
         "name" => $name,
         "email" => $email,
@@ -156,7 +147,6 @@ try {
 } catch (Exception $e) {
     error_log("Unhandled exception: " . $e->getMessage());
     http_response_code(500);
-    ob_end_clean();
     echo json_encode(["error" => "Unexpected server error"]);
     exit;
 }

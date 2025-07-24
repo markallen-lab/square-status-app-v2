@@ -24,6 +24,7 @@ const Clients = () => {
   const [clients, setClients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // New client form state
   const [newClient, setNewClient] = useState({
@@ -47,7 +48,7 @@ const Clients = () => {
   }, []);
 
   const fetchClients = () => {
-    fetch('http://localhost/squarestatusApp/api/getClients.php')
+    fetch(`${apiUrl}/getClients.php`)
       .then((res) => res.json())
       .then((data) => {
         if (data.clients) {
@@ -96,14 +97,11 @@ const Clients = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch(
-        'http://localhost/squarestatusApp/api/add-client.php',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newClient),
-        }
-      );
+      const response = await fetch(`${apiUrl}/add-client.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClient),
+      });
       const data = await response.json();
 
       if (data.success) {
