@@ -26,8 +26,8 @@ try {
   }
 
   $stmt = $pdo->prepare("INSERT INTO tasks (title, project, assignedTo, priority, status, dueDate, clientId, timeTracked, timerRunning)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-  $stmt->execute([
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
     $data['title'],
     $data['project'] ?? null,
     $data['assignedTo'] ?? null,
