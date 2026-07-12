@@ -15,28 +15,31 @@ try {
         ]
     );
 
-    $data = json_decode(file_get_contents("php://input"), true);
+    // Only return active admin users that can be assigned tasks
+    $stmt = $pdo->prepare("
+        SELECT
+            id,
+            name,
+            email,
+            role
+        FROM users
+        WHERE role IN ('admin', 'super-admin')
+        ORDER BY name ASC
+    ");
 
-    if (!$data || empty($data['id'])) {
-        http_response_code(400);
-        echo json_encode([
-            'error' => 'Missing task ID'
-        ]);
-        exit;
-    }
+    $stmt->execute();
 
-    $stmt = $pdo->prepare("DELETE FROM tasks WHERE id = ?");
-    $stmt->execute([$data['id']]);
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
-        'success' => true
+        'users' => $users
     ]);
 
 } catch (Exception $e) {
     http_response_code(500);
 
     echo json_encode([
-        'error' => 'Failed to delete task'
+        'error' => 'Failed to fetch users'
         // Uncomment while debugging:
         // 'details' => $e->getMessage()
     ]);

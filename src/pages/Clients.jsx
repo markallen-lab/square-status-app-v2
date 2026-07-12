@@ -21,10 +21,10 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
 const Clients = () => {
+  const API_BASE = import.meta.env.VITE_API_URL;
   const [clients, setClients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   // New client form state
   const [newClient, setNewClient] = useState({
@@ -48,26 +48,26 @@ const Clients = () => {
   }, []);
 
   const fetchClients = () => {
-    fetch(`${apiUrl}/getClients.php`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.clients) {
-          setClients(data.clients);
-        } else {
-          toast({
-            title: 'Error',
-            description: 'Failed to fetch clients.',
-            variant: 'destructive',
-          });
+    fetch(`${API_BASE}/getClients.php`)
+      .then(async (res) => {
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch clients');
         }
+
+        return data;
       })
-      .catch(() =>
+      .then((data) => {
+        setClients(data.clients);
+      })
+      .catch((err) => {
         toast({
           title: 'Error',
-          description: 'Network or server error occurred.',
+          description: err.message,
           variant: 'destructive',
-        })
-      );
+        });
+      });
   };
 
   const openModal = () => {
@@ -97,7 +97,7 @@ const Clients = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch(`${apiUrl}/add-client.php`, {
+      const response = await fetch(`${API_BASE}/add-client.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClient),
@@ -175,8 +175,8 @@ const Clients = () => {
                             client.status === 'Active'
                               ? 'default'
                               : client.status === 'Inactive'
-                              ? 'destructive'
-                              : 'secondary'
+                                ? 'destructive'
+                                : 'secondary'
                           }>
                           {client.status}
                         </Badge>

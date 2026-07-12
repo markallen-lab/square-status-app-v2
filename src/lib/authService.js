@@ -44,7 +44,7 @@ export const registerUser = async (
   name,
   phone,
   role,
-  enableRoleSelection
+  enableRoleSelection,
 ) => {
   const users = getUsersFromStorage();
   if (users.find((user) => user.email === email)) {
@@ -73,15 +73,43 @@ export const registerUser = async (
 export const authenticateUser = async (email, password) => {
   const response = await fetch(`${API_BASE}/login.php`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({ email, password }),
   });
-  const data = await response.json();
-  if (!response.ok || !data.user) {
-    throw new Error(data?.error || 'Invalid email or password');
+
+  const text = await response.text();
+
+  console.log('Status:', response.status);
+  console.log('Response:', text);
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`Server returned invalid JSON:\n${text}`);
   }
+
+  if (!response.ok || !data.user) {
+    throw new Error(data.error || 'Invalid email or password');
+  }
+
   return data.user;
 };
+
+// export const authenticateUser = async (email, password) => {
+//   const response = await fetch(`${API_BASE}/login.php`, {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({ email, password }),
+//   });
+//   const data = await response.json();
+//   if (!response.ok || !data.user) {
+//     throw new Error(data?.error || 'Invalid email or password');
+//   }
+//   return data.user;
+// };
 
 export const confirmEmailVerification = async (email, code) => {
   const storedCode = getVerificationCode('email', email);
@@ -89,7 +117,7 @@ export const confirmEmailVerification = async (email, code) => {
     throw new Error('Invalid verification code');
   const users = getUsersFromStorage();
   const updatedUsers = users.map((u) =>
-    u.email === email ? { ...u, emailVerified: true } : u
+    u.email === email ? { ...u, emailVerified: true } : u,
   );
   saveUsersToStorage(updatedUsers);
   removeVerificationCode('email', email);
@@ -144,14 +172,14 @@ export const initiatePasswordReset = async (email) => {
   storageService.setItem(
     `${PASSWORD_RESET_TOKEN_PREFIX}${token}`,
     { email: user.email, expires: Date.now() + 3600000 },
-    3600
+    3600,
   );
   return token;
 };
 
 export const completePasswordReset = async (token, newPassword) => {
   const tokenData = storageService.getItem(
-    `${PASSWORD_RESET_TOKEN_PREFIX}${token}`
+    `${PASSWORD_RESET_TOKEN_PREFIX}${token}`,
   );
   if (!tokenData || tokenData.expires < Date.now()) {
     throw new Error('Invalid or expired password reset token.');

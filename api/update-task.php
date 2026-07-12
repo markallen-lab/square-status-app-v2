@@ -20,19 +20,33 @@ try {
     exit;
   }
 
-  $stmt = $pdo->prepare("UPDATE tasks SET title=?, project=?, assignedTo=?, priority=?, status=?, dueDate=?, clientId=?, timeTracked=?, timerRunning=? WHERE id=?");
-  $stmt->execute([
+$stmt = $pdo->prepare("
+    UPDATE tasks
+    SET
+        title = ?,
+        project = ?,
+        assigned_to = ?,
+        priority = ?,
+        status = ?,
+        dueDate = ?,
+        clientId = ?,
+        timeTracked = ?,
+        timerRunning = ?
+    WHERE id = ?
+");
+
+$stmt->execute([
     $data['title'],
-    $data['project'],
-    $data['assignedTo'],
+    $data['project'] ?? null,
+    $data['assigned_to'] ?? null,
     $data['priority'],
     $data['status'],
-    $data['dueDate'],
-    $data['clientId'],
-    $data['timeTracked'],
-    $data['timerRunning'],
+    $data['dueDate'] ?? null,
+    $data['clientId'] ?? null,
+    $data['timeTracked'] ?? 0,
+    $data['timerRunning'] ?? 0,
     $data['id']
-  ]);
+]);
 
   echo json_encode(['success' => true]);
 } catch (Exception $e) {
